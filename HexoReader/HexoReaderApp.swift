@@ -6,8 +6,23 @@ struct HexoReaderApp: App {
 
     var body: some Scene {
         WindowGroup {
-            BlogListView(viewModel: viewModel)
-                .preferredColorScheme(nil)
+            TabView {
+                BlogListView(viewModel: viewModel)
+                    .tabItem {
+                        Label(LocalizedStringKey("tab.posts"), systemImage: "newspaper")
+                    }
+
+                AboutView(viewModel: viewModel)
+                    .tabItem {
+                        Label(LocalizedStringKey("tab.about"), systemImage: "info.circle")
+                    }
+            }
+            .toolbarBackground(.ultraThinMaterial, for: .tabBar)
+            .toolbarBackground(.visible, for: .tabBar)
+            .background(.ultraThinMaterial)
+            .glassEffect()
+            .environment(\.locale, Locale(identifier: viewModel.selectedLanguage.localeIdentifier))
+            .preferredColorScheme(nil)
         }
     }
 }
