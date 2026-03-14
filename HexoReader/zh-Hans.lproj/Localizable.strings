@@ -25,3 +25,7 @@
 "tab.posts" = "文章";
 "tab.settings" = "设置";
 "article.open_source" = "打开原文链接";
+"tab.about" = "关于博客";
+"about.title" = "关于博客";
+"about.load_failed" = "无法加载关于页面";
+"about.open_source" = "打开关于页面来源";

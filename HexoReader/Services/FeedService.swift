@@ -43,15 +43,26 @@ struct FeedService {
     }
 
     func loadArticle(from url: URL) async throws -> LoadedArticle {
-        let candidates = buildCandidateArticleURLs(from: url)
+        let markdownCandidates = buildMarkdownCandidateURLs(from: url)
+        for candidate in markdownCandidates {
+            if let markdown = try await fetchMarkdownIfAvailable(from: candidate), !markdown.isEmpty {
+                return LoadedArticle(
+                    title: titleFromURL(url),
+                    markdown: markdown,
+                    publishDate: extractDate(from: candidate.path),
+                    resolvedURL: candidate
+                )
+            }
+        }
 
-        for candidate in candidates {
+        let htmlCandidates = buildCandidateArticleURLs(from: url)
+        for candidate in htmlCandidates {
             do {
                 let html = try await fetchHTML(from: candidate)
                 if !html.isEmpty {
                     let articleHTML = extractArticleHTML(from: html) ?? html
                     let markdown = htmlToMarkdown(articleHTML)
-                    let title = extractTitle(from: html) ?? String(localized: "article.title")
+                    let title = extractTitle(from: html) ?? titleFromURL(candidate)
                     return LoadedArticle(
                         title: title,
                         markdown: markdown,
@@ -65,6 +76,84 @@ struct FeedService {
         }
 
         throw FeedServiceError.articleLoadFailed
+    }
+
+    func loadAbout(baseURLString: String) async throws -> LoadedArticle {
+        let baseURL = try normalizedURL(from: baseURLString)
+        let aboutURL = URL(string: "about/", relativeTo: baseURL)?.absoluteURL ?? baseURL
+
+        let markdownCandidates = [
+            URL(string: "about/index.md", relativeTo: baseURL)?.absoluteURL,
+            URL(string: "about.md", relativeTo: baseURL)?.absoluteURL,
+            URL(string: "about/README.md", relativeTo: baseURL)?.absoluteURL
+        ].compactMap { $0 }
+
+        for candidate in markdownCandidates {
+            if let markdown = try await fetchMarkdownIfAvailable(from: candidate), !markdown.isEmpty {
+                return LoadedArticle(
+                    title: String(localized: "about.title"),
+                    markdown: markdown,
+                    publishDate: nil,
+                    resolvedURL: candidate
+                )
+            }
+        }
+
+        let htmlCandidates = buildCandidateArticleURLs(from: aboutURL)
+        for candidate in htmlCandidates {
+            do {
+                let html = try await fetchHTML(from: candidate)
+                let articleHTML = extractArticleHTML(from: html) ?? html
+                let title = extractTitle(from: html) ?? String(localized: "about.title")
+                return LoadedArticle(
+                    title: title,
+                    markdown: htmlToMarkdown(articleHTML),
+                    publishDate: nil,
+                    resolvedURL: candidate
+                )
+            } catch {
+                continue
+            }
+        }
+
+        throw FeedServiceError.articleLoadFailed
+    }
+
+    private func normalizedURL(from string: String) throws -> URL {
+        let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { throw URLError(.badURL) }
+
+        if let directURL = URL(string: trimmed), directURL.scheme != nil {
+            return directURL
+        }
+
+        if let httpsURL = URL(string: "https://\(trimmed)") {
+            return httpsURL
+        }
+
+        throw URLError(.badURL)
+    }
+
+    private func fetchMarkdownIfAvailable(from url: URL) async throws -> String? {
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 15
+        request.setValue("text/markdown,text/plain;q=0.9,*/*;q=0.8", forHTTPHeaderField: "Accept")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200..<300).contains(httpResponse.statusCode) else {
+            return nil
+        }
+
+        let markdown = String(data: data, encoding: .utf8)
+            ?? String(data: data, encoding: .unicode)
+            ?? String(decoding: data, as: UTF8.self)
+
+        if markdown.contains("<html") || markdown.contains("<!DOCTYPE html") {
+            return nil
+        }
+
+        return markdown.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func fetchHTML(from url: URL) async throws -> String {
@@ -132,7 +221,7 @@ struct FeedService {
         let candidates = [
             #"<article[^>]*>(.*?)</article>"#,
             #"<main[^>]*>(.*?)</main>"#,
-            #"<div[^>]*class=[\"'][^\"']*(post-content|article-entry|entry-content)[^\"']*[\"'][^>]*>(.*?)</div>"#
+            #"<div[^>]*class=[\"'][^\"']*(post-content|article-entry|entry-content|page-content)[^\"']*[\"'][^>]*>(.*?)</div>"#
         ]
 
         for pattern in candidates {
@@ -157,7 +246,7 @@ struct FeedService {
 
     private func extractTitle(from html: String) -> String? {
         let candidates = [
-            #"<h1[^>]*class=[\"'][^\"']*(post-title|article-title)[^\"']*[\"'][^>]*>(.*?)</h1>"#,
+            #"<h1[^>]*class=[\"'][^\"']*(post-title|article-title|page-title)[^\"']*[\"'][^>]*>(.*?)</h1>"#,
             #"<h1[^>]*>(.*?)</h1>"#,
             #"<title[^>]*>(.*?)</title>"#
         ]
@@ -256,6 +345,12 @@ struct FeedService {
         html.replacingOccurrences(of: #"<[^>]+>"#, with: "", options: .regularExpression)
     }
 
+    private func titleFromURL(_ url: URL) -> String {
+        let components = url.pathComponents.filter { $0 != "/" }
+        return components.last?.replacingOccurrences(of: "-", with: " ").capitalized
+            ?? String(localized: "article.title")
+    }
+
     private func extractDate(from path: String) -> Date? {
         let segments = path.split(separator: "/")
         guard segments.count >= 3 else { return nil }
@@ -336,6 +431,34 @@ struct FeedService {
             if let fallbackURL = components?.url {
                 candidates.append(fallbackURL)
             }
+        }
+
+        return Array(NSOrderedSet(array: candidates)) as? [URL] ?? candidates
+    }
+
+    private func buildMarkdownCandidateURLs(from url: URL) -> [URL] {
+        var candidates = [URL]()
+        var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        let path = components?.path ?? ""
+
+        if path.lowercased().hasSuffix(".md") {
+            return [url]
+        }
+
+        if path.lowercased().hasSuffix(".html") {
+            components?.path = path.replacingOccurrences(of: ".html", with: ".md")
+            if let mdURL = components?.url { candidates.append(mdURL) }
+        } else {
+            var normalizedPath = path
+            if !normalizedPath.hasSuffix("/") {
+                normalizedPath += "/"
+            }
+
+            components?.path = normalizedPath + "index.md"
+            if let indexMD = components?.url { candidates.append(indexMD) }
+
+            components?.path = String(normalizedPath.dropLast()) + ".md"
+            if let flatMD = components?.url { candidates.append(flatMD) }
         }
 
         return Array(NSOrderedSet(array: candidates)) as? [URL] ?? candidates

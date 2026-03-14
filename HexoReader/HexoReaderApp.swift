@@ -12,16 +12,15 @@ struct HexoReaderApp: App {
                         Label(LocalizedStringKey("tab.posts"), systemImage: "newspaper")
                     }
 
-                NavigationStack {
-                    SettingsView(viewModel: viewModel, dismissAfterSave: false)
-                }
-                .tabItem {
-                    Label(LocalizedStringKey("tab.settings"), systemImage: "gearshape")
-                }
+                AboutView(viewModel: viewModel)
+                    .tabItem {
+                        Label(LocalizedStringKey("tab.about"), systemImage: "info.circle")
+                    }
             }
             .toolbarBackground(.ultraThinMaterial, for: .tabBar)
             .toolbarBackground(.visible, for: .tabBar)
             .background(.ultraThinMaterial)
+            .glassEffect()
             .environment(\.locale, Locale(identifier: viewModel.selectedLanguage.localeIdentifier))
             .preferredColorScheme(nil)
         }

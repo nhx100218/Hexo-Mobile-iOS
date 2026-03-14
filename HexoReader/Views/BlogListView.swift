@@ -18,6 +18,7 @@ struct BlogListView: View {
                 .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
                 .toolbarBackground(.visible, for: .navigationBar)
                 .background(.ultraThinMaterial)
+                .glassEffect()
                 .task {
                     if !viewModel.baseURL.isEmpty, viewModel.posts.isEmpty {
                         await viewModel.loadPosts()
@@ -56,6 +57,7 @@ struct BlogListView: View {
                 .listRowBackground(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .fill(.ultraThinMaterial)
+                        .glassEffect()
                         .padding(.vertical, 2)
                 )
                 .listRowSeparator(.hidden)
@@ -67,20 +69,19 @@ struct BlogListView: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
-        if let detectedFeedPath = viewModel.detectedFeedURL?.path {
-            ToolbarItem(placement: .topBarLeading) {
-                Label(detectedFeedPath, systemImage: "dot.radiowaves.left.and.right")
-                    .font(.caption)
-                    .labelStyle(.titleAndIcon)
-                    .foregroundStyle(.secondary)
-            }
-        }
-
-        ToolbarItem(placement: .topBarTrailing) {
+        ToolbarItem(placement: .topBarLeading) {
             Button {
                 Task { await viewModel.loadPosts() }
             } label: {
                 Image(systemName: "arrow.clockwise")
+                    .padding(8)
+                    .background(.ultraThinMaterial, in: Circle())
+            }
+        }
+
+        ToolbarItem(placement: .topBarTrailing) {
+            NavigationLink(destination: SettingsView(viewModel: viewModel)) {
+                Image(systemName: "gearshape")
                     .padding(8)
                     .background(.ultraThinMaterial, in: Circle())
             }

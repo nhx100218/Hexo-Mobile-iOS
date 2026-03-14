@@ -25,3 +25,7 @@
 "tab.posts" = "Posts";
 "tab.settings" = "Settings";
 "article.open_source" = "Open Original Link";
+"tab.about" = "About Blog";
+"about.title" = "About Blog";
+"about.load_failed" = "Unable to Load About Page";
+"about.open_source" = "Open About Source";

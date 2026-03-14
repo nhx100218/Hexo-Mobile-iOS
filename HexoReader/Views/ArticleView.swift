@@ -27,6 +27,7 @@ struct ArticleView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .glassEffect()
         .task {
             await loadArticleIfNeeded()
         }
@@ -59,11 +60,14 @@ struct ArticleView: View {
 
                     Divider()
 
-                    markdownContent(text: loadedArticle.markdown)
+                    // Keep markdown as raw text for readability/debugging.
+                    Text(loadedArticle.markdown)
                         .font(.body)
                         .foregroundStyle(.primary)
                         .lineSpacing(6)
                         .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .dynamicTypeSize(.xSmall ... .accessibility3)
 
                     Link(LocalizedStringKey("article.open_source"), destination: loadedArticle.resolvedURL)
                         .font(.footnote)
@@ -72,23 +76,11 @@ struct ArticleView: View {
                 }
                 .padding(18)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .glassEffect()
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
             }
             .scrollIndicators(.hidden)
-        }
-    }
-
-    @ViewBuilder
-    private func markdownContent(text: String) -> some View {
-        if let attributed = try? AttributedString(markdown: text) {
-            Text(attributed)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .dynamicTypeSize(.xSmall ... .accessibility3)
-        } else {
-            Text(text)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .dynamicTypeSize(.xSmall ... .accessibility3)
         }
     }
 
