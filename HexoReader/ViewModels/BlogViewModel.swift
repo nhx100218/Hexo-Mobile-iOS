@@ -3,6 +3,11 @@ import Foundation
 @MainActor
 final class BlogViewModel: ObservableObject {
     @Published var baseURL: String
+    @Published var selectedLanguage: AppLanguage {
+        didSet {
+            UserDefaults.standard.set(selectedLanguage.rawValue, forKey: StorageKeys.language)
+        }
+    }
     @Published private(set) var detectedFeedURL: URL?
     @Published private(set) var posts: [Post] = []
     @Published private(set) var isLoading = false
@@ -13,6 +18,7 @@ final class BlogViewModel: ObservableObject {
 
     private enum StorageKeys {
         static let baseURL = "HexoReader.baseURL"
+        static let language = "HexoReader.language"
     }
 
     init(
@@ -22,11 +28,14 @@ final class BlogViewModel: ObservableObject {
         self.blogDetectService = blogDetectService
         self.feedService = feedService
         self.baseURL = UserDefaults.standard.string(forKey: StorageKeys.baseURL) ?? ""
+
+        let rawLanguage = UserDefaults.standard.string(forKey: StorageKeys.language) ?? AppLanguage.chinese.rawValue
+        self.selectedLanguage = AppLanguage(rawValue: rawLanguage) ?? .chinese
     }
 
     func loadPosts() async {
         guard !baseURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            errorMessage = "Enter a blog URL in Settings to begin."
+            errorMessage = String(localized: "error.enter_blog_url")
             posts = []
             return
         }
