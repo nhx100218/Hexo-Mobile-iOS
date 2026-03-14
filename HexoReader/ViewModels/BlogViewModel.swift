@@ -34,7 +34,8 @@ final class BlogViewModel: ObservableObject {
     }
 
     func loadPosts() async {
-        guard !baseURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        let trimmed = baseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
             errorMessage = String(localized: "error.enter_blog_url")
             posts = []
             return
@@ -45,18 +46,37 @@ final class BlogViewModel: ObservableObject {
         defer { isLoading = false }
 
         do {
-            let feedURL = try await blogDetectService.detectFeed(baseURLString: baseURL)
+            let feedURL = try await blogDetectService.detectFeed(baseURLString: trimmed)
             let loadedPosts = try await feedService.fetchPosts(feedURL: feedURL)
             detectedFeedURL = feedURL
             posts = loadedPosts
         } catch {
-            detectedFeedURL = nil
-            posts = []
-            errorMessage = error.localizedDescription
+            do {
+                let blogURL = try normalizedBlogURL(from: trimmed)
+                let loadedPosts = try await feedService.fetchPostsFromHexoHTML(baseURL: blogURL)
+                detectedFeedURL = nil
+                posts = loadedPosts
+            } catch {
+                detectedFeedURL = nil
+                posts = []
+                errorMessage = error.localizedDescription
+            }
         }
     }
 
     func saveBaseURL() {
         UserDefaults.standard.set(baseURL, forKey: StorageKeys.baseURL)
+    }
+
+    private func normalizedBlogURL(from string: String) throws -> URL {
+        if let directURL = URL(string: string), directURL.scheme != nil {
+            return directURL
+        }
+
+        if let httpsURL = URL(string: "https://\(string)") {
+            return httpsURL
+        }
+
+        throw URLError(.badURL)
     }
 }

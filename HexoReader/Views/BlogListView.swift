@@ -77,16 +77,12 @@ struct BlogListView: View {
         }
 
         ToolbarItem(placement: .topBarTrailing) {
-            NavigationLink(destination: SettingsView(viewModel: viewModel)) {
-                Image(systemName: "gearshape")
-            }
-        }
-
-        ToolbarItem(placement: .topBarTrailing) {
             Button {
                 Task { await viewModel.loadPosts() }
             } label: {
                 Image(systemName: "arrow.clockwise")
+                    .padding(8)
+                    .background(.ultraThinMaterial, in: Circle())
             }
         }
     }

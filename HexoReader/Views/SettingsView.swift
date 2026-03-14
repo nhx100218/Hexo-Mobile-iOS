@@ -2,6 +2,8 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var viewModel: BlogViewModel
+    var dismissAfterSave: Bool = true
+
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -26,11 +28,17 @@ struct SettingsView: View {
                     viewModel.saveBaseURL()
                     Task {
                         await viewModel.loadPosts()
-                        dismiss()
+                        if dismissAfterSave {
+                            dismiss()
+                        }
                     }
                 }
+                .font(.headline)
                 .frame(maxWidth: .infinity)
+                .padding(.vertical, 6)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
+            .listRowBackground(Color.clear)
         }
         .scrollContentBackground(.hidden)
         .background(.ultraThinMaterial)

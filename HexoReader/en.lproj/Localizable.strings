@@ -22,3 +22,5 @@
 "error.feed_parse_failed" = "Could not parse feed data.";
 "error.feed_no_posts" = "Feed loaded successfully, but no posts were found.";
 "error.article_load_failed" = "Could not load article content from this URL.";
+"tab.posts" = "Posts";
+"tab.settings" = "Settings";

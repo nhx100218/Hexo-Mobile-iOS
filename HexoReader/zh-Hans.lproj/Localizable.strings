@@ -22,3 +22,5 @@
 "error.feed_parse_failed" = "无法解析订阅数据。";
 "error.feed_no_posts" = "订阅加载成功，但未找到文章。";
 "error.article_load_failed" = "无法从该链接加载文章内容。";
+"tab.posts" = "文章";
+"tab.settings" = "设置";

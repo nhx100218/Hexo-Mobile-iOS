@@ -40,11 +40,12 @@ struct ArticleView: View {
                 description: Text(errorMessage)
             )
         } else if let loadedArticle {
-            WebView(html: loadedArticle.html, baseURL: loadedArticle.resolvedURL)
+            WebView(html: formattedHTML(from: loadedArticle.html), baseURL: loadedArticle.resolvedURL)
                 .ignoresSafeArea(edges: .bottom)
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 .padding(.horizontal, 10)
                 .padding(.bottom, 8)
+                .background(.ultraThinMaterial)
         }
     }
 
@@ -60,6 +61,37 @@ struct ArticleView: View {
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    private func formattedHTML(from html: String) -> String {
+        let styleBlock = """
+        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"> 
+        <style>
+        :root { color-scheme: light dark; }
+        body {
+            font: -apple-system-body;
+            line-height: 1.65;
+            margin: 0;
+            padding: 16px;
+            background: transparent;
+            word-wrap: break-word;
+        }
+        p, li, span { font-size: 1rem; }
+        h1, h2, h3, h4 { line-height: 1.3; }
+        img, video, iframe { max-width: 100%; height: auto; }
+        a { color: #0A84FF; text-decoration: none; }
+        pre, code {
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        </style>
+        """
+
+        if html.localizedCaseInsensitiveContains("<head") {
+            return html.replacingOccurrences(of: "</head>", with: "\(styleBlock)</head>")
+        }
+
+        return "<html><head>\(styleBlock)</head><body>\(html)</body></html>"
     }
 }
 
