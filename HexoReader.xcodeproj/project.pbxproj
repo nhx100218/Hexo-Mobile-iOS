@@ -1,0 +1,359 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A00000000000000000000001 /* HexoReaderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000011 /* HexoReaderApp.swift */; };
+		A00000000000000000000002 /* Post.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000012 /* Post.swift */; };
+		A00000000000000000000003 /* FeedService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000013 /* FeedService.swift */; };
+		A00000000000000000000004 /* BlogDetectService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000014 /* BlogDetectService.swift */; };
+		A00000000000000000000005 /* BlogViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000015 /* BlogViewModel.swift */; };
+		A00000000000000000000006 /* BlogListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000016 /* BlogListView.swift */; };
+		A00000000000000000000007 /* ArticleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000017 /* ArticleView.swift */; };
+		A00000000000000000000008 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000018 /* SettingsView.swift */; };
+		A00000000000000000000009 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000019 /* Constants.swift */; };
+		A0000000000000000000000A /* FeedKit in Frameworks */ = {isa = PBXBuildFile; productRef = A00000000000000000000041 /* FeedKit */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A0000000000000000000000F /* HexoReader.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HexoReader.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A00000000000000000000011 /* HexoReaderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexoReaderApp.swift; sourceTree = "<group>"; };
+		A00000000000000000000012 /* Post.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Post.swift; sourceTree = "<group>"; };
+		A00000000000000000000013 /* FeedService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedService.swift; sourceTree = "<group>"; };
+		A00000000000000000000014 /* BlogDetectService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogDetectService.swift; sourceTree = "<group>"; };
+		A00000000000000000000015 /* BlogViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogViewModel.swift; sourceTree = "<group>"; };
+		A00000000000000000000016 /* BlogListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlogListView.swift; sourceTree = "<group>"; };
+		A00000000000000000000017 /* ArticleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArticleView.swift; sourceTree = "<group>"; };
+		A00000000000000000000018 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A00000000000000000000019 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A00000000000000000000020 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A0000000000000000000000A /* FeedKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A00000000000000000000030 = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000031 /* HexoReader */,
+				A00000000000000000000032 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A00000000000000000000031 /* HexoReader */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000011 /* HexoReaderApp.swift */,
+				A00000000000000000000033 /* Models */,
+				A00000000000000000000034 /* Services */,
+				A00000000000000000000035 /* ViewModels */,
+				A00000000000000000000036 /* Views */,
+				A00000000000000000000037 /* Utils */,
+			);
+			path = HexoReader;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000032 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A0000000000000000000000F /* HexoReader.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000033 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000012 /* Post.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000034 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000014 /* BlogDetectService.swift */,
+				A00000000000000000000013 /* FeedService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000035 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000015 /* BlogViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000036 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000016 /* BlogListView.swift */,
+				A00000000000000000000017 /* ArticleView.swift */,
+				A00000000000000000000018 /* SettingsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000037 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000019 /* Constants.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A00000000000000000000021 /* HexoReader */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A00000000000000000000027 /* Build configuration list for PBXNativeTarget "HexoReader" */;
+			buildPhases = (
+				A00000000000000000000022 /* Sources */,
+				A00000000000000000000020 /* Frameworks */,
+				A00000000000000000000023 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HexoReader;
+			packageProductDependencies = (
+				A00000000000000000000041 /* FeedKit */,
+			);
+			productName = HexoReader;
+			productReference = A0000000000000000000000F /* HexoReader.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A00000000000000000000010 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					A00000000000000000000021 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = A00000000000000000000024 /* Build configuration list for PBXProject "HexoReader" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A00000000000000000000030;
+			packageReferences = (
+				A00000000000000000000040 /* XCRemoteSwiftPackageReference "FeedKit" */,
+			);
+			preferredProjectObjectVersion = 56;
+			productRefGroup = A00000000000000000000032 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A00000000000000000000021 /* HexoReader */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A00000000000000000000023 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A00000000000000000000022 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000001 /* HexoReaderApp.swift in Sources */,
+				A00000000000000000000002 /* Post.swift in Sources */,
+				A00000000000000000000003 /* FeedService.swift in Sources */,
+				A00000000000000000000004 /* BlogDetectService.swift in Sources */,
+				A00000000000000000000005 /* BlogViewModel.swift in Sources */,
+				A00000000000000000000006 /* BlogListView.swift in Sources */,
+				A00000000000000000000007 /* ArticleView.swift in Sources */,
+				A00000000000000000000008 /* SettingsView.swift in Sources */,
+				A00000000000000000000009 /* Constants.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A00000000000000000000025 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A00000000000000000000026 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A00000000000000000000028 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = HexoReader;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.opensource.HexoReader;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A00000000000000000000029 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = HexoReader;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.opensource.HexoReader;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A00000000000000000000024 /* Build configuration list for PBXProject "HexoReader" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00000000000000000000025 /* Debug */,
+				A00000000000000000000026 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A00000000000000000000027 /* Build configuration list for PBXNativeTarget "HexoReader" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00000000000000000000028 /* Debug */,
+				A00000000000000000000029 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A00000000000000000000040 /* XCRemoteSwiftPackageReference "FeedKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/nmdias/FeedKit";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A00000000000000000000041 /* FeedKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A00000000000000000000040 /* XCRemoteSwiftPackageReference "FeedKit" */;
+			productName = FeedKit;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = A00000000000000000000010 /* Project object */;
+}
