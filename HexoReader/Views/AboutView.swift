@@ -1,7 +1,7 @@
 import SwiftUI
 
-struct ArticleView: View {
-    let url: URL
+struct AboutView: View {
+    @ObservedObject var viewModel: BlogViewModel
 
     @State private var loadedArticle: LoadedArticle?
     @State private var isLoading = false
@@ -9,62 +9,55 @@ struct ArticleView: View {
 
     private let feedService = FeedService()
 
-    private static let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        return formatter
-    }()
-
     var body: some View {
-        ZStack {
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .ignoresSafeArea()
+        NavigationStack {
+            ZStack {
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                    .ignoresSafeArea()
 
-            content
-        }
-        .navigationTitle(LocalizedStringKey("article.title"))
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
-        .task {
-            await loadArticleIfNeeded()
+                content
+            }
+            .navigationTitle(LocalizedStringKey("about.title"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .task { await loadAbout() }
         }
     }
 
     @ViewBuilder
     private var content: some View {
         if isLoading {
-            ProgressView(LocalizedStringKey("common.loading"))
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            VStack {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .frame(height: 92)
+                    .padding(.horizontal, 16)
+
+                ProgressView(LocalizedStringKey("common.loading"))
+                    .padding(.top, 8)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let errorMessage {
             ContentUnavailableView(
-                LocalizedStringKey("article.load_failed"),
-                systemImage: "wifi.exclamationmark",
+                LocalizedStringKey("about.load_failed"),
+                systemImage: "info.circle",
                 description: Text(errorMessage)
             )
         } else if let loadedArticle {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     Text(loadedArticle.title)
-                        .font(.title)
+                        .font(.title2)
                         .fontWeight(.semibold)
-                        .foregroundStyle(.primary)
-
-                    if let publishDate = loadedArticle.publishDate {
-                        Text(Self.dateFormatter.string(from: publishDate))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
 
                     Divider()
 
-                    MarkdownContentView(markdown: loadedArticle.markdown)
+                    AboutMarkdownContentView(markdown: loadedArticle.markdown)
 
-                    Link(LocalizedStringKey("article.open_source"), destination: loadedArticle.resolvedURL)
+                    Link(LocalizedStringKey("about.open_source"), destination: loadedArticle.resolvedURL)
                         .font(.footnote)
-                        .foregroundStyle(.blue)
-                        .padding(.top, 8)
                 }
                 .padding(18)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
@@ -75,14 +68,18 @@ struct ArticleView: View {
         }
     }
 
-    private func loadArticleIfNeeded() async {
-        guard loadedArticle == nil else { return }
+    private func loadAbout() async {
+        let trimmed = viewModel.baseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            errorMessage = String(localized: "error.enter_blog_url")
+            return
+        }
 
         isLoading = true
         defer { isLoading = false }
 
         do {
-            loadedArticle = try await feedService.loadArticle(from: url)
+            loadedArticle = try await feedService.loadAbout(baseURLString: trimmed)
             errorMessage = nil
         } catch {
             errorMessage = error.localizedDescription
@@ -90,7 +87,7 @@ struct ArticleView: View {
     }
 }
 
-private struct MarkdownContentView: View {
+private struct AboutMarkdownContentView: View {
     let markdown: String
 
     var body: some View {
@@ -103,19 +100,17 @@ private struct MarkdownContentView: View {
         ) {
             Text(attributed)
                 .font(.body)
-                .foregroundStyle(.primary)
                 .lineSpacing(6)
                 .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
                 .dynamicTypeSize(.xSmall ... .accessibility3)
+                .frame(maxWidth: .infinity, alignment: .leading)
         } else {
             Text(markdown)
                 .font(.body)
-                .foregroundStyle(.primary)
                 .lineSpacing(6)
                 .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
                 .dynamicTypeSize(.xSmall ... .accessibility3)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }
