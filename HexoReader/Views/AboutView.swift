@@ -12,15 +12,13 @@ struct AboutView: View {
 
     var body: some View {
         NavigationStack {
-            GlassEffectContainer {
-                ZStack {
+            ZStack {
                     Rectangle()
                         .fill(.ultraThinMaterial)
                         .ignoresSafeArea()
 
                     content
                 }
-            }
             .navigationTitle(LocalizedStringKey("about.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
@@ -37,7 +35,6 @@ struct AboutView: View {
                     .fill(.ultraThinMaterial)
                     .frame(height: 92)
                     .matchedGeometryEffect(id: "aboutCard", in: glassNamespace)
-                    .glassEffect()
                     .padding(.horizontal, 16)
 
                 ProgressView(LocalizedStringKey("common.loading"))
@@ -70,7 +67,6 @@ struct AboutView: View {
                 }
                 .padding(18)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-                .glassEffect()
                 .matchedGeometryEffect(id: "aboutCard", in: glassNamespace)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)

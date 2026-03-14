@@ -20,9 +20,7 @@ struct HexoReaderApp: App {
             .toolbarBackground(.ultraThinMaterial, for: .tabBar)
             .toolbarBackground(.visible, for: .tabBar)
             .background(.ultraThinMaterial)
-            .glassEffect()
             .environment(\.locale, Locale(identifier: viewModel.selectedLanguage.localeIdentifier))
-            .preferredColorScheme(nil)
         }
     }
 }

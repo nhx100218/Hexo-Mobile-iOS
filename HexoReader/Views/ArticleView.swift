@@ -27,7 +27,6 @@ struct ArticleView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .glassEffect()
         .task {
             await loadArticleIfNeeded()
         }
@@ -76,7 +75,6 @@ struct ArticleView: View {
                 }
                 .padding(18)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-                .glassEffect()
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
             }

@@ -18,7 +18,6 @@ struct BlogListView: View {
                 .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
                 .toolbarBackground(.visible, for: .navigationBar)
                 .background(.ultraThinMaterial)
-                .glassEffect()
                 .task {
                     if !viewModel.baseURL.isEmpty, viewModel.posts.isEmpty {
                         await viewModel.loadPosts()
@@ -57,7 +56,6 @@ struct BlogListView: View {
                 .listRowBackground(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .fill(.ultraThinMaterial)
-                        .glassEffect()
                         .padding(.vertical, 2)
                 )
                 .listRowSeparator(.hidden)
