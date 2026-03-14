@@ -3,7 +3,7 @@ import SwiftUI
 struct BlogListView: View {
     @ObservedObject var viewModel: BlogViewModel
 
-    private static let dateFormatter: DateFormatter = {
+    static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
@@ -51,7 +51,7 @@ struct BlogListView: View {
     private var postList: some View {
         List(viewModel.posts) { post in
             BlogPostRow(post: post)
-                .listRowBackground(.ultraThinMaterial)
+                .listRowBackground(Rectangle().fill(.ultraThinMaterial))
         }
         .scrollContentBackground(.hidden)
         .background(Color(.systemBackground))
