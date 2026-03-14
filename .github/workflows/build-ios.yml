@@ -16,21 +16,37 @@ jobs:
       - name: Build archive
         run: |
           xcodebuild \
+            -project HexoReader.xcodeproj \
             -scheme HexoReader \
             -sdk iphoneos \
             -configuration Release \
             -destination generic/platform=iOS \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM= \
+            CODE_SIGN_IDENTITY= \
+            CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             archive \
             -archivePath build/HexoReader.xcarchive
 
-      - name: Export IPA
+      - name: Package unsigned IPA
         run: |
-          xcodebuild -exportArchive \
-            -archivePath build/HexoReader.xcarchive \
-            -exportPath build \
-            -exportOptionsPlist ExportOptions.plist \
-            CODE_SIGNING_ALLOWED=NO
+          APP_PATH=$(find build/HexoReader.xcarchive/Products/Applications -maxdepth 1 -name "*.app" -print -quit)
+          if [ -z "$APP_PATH" ]; then
+            echo "No .app found in archive"
+            exit 1
+          fi
+
+          rm -rf build/Payload
+          mkdir -p build/Payload
+          cp -R "$APP_PATH" build/Payload/
+
+          (
+            cd build
+            /usr/bin/zip -qry HexoReader.ipa Payload
+          )
+
+          rm -rf build/Payload
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
