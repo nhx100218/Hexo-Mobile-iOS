@@ -59,14 +59,7 @@ struct ArticleView: View {
 
                     Divider()
 
-                    // Keep markdown as raw text for readability/debugging.
-                    Text(loadedArticle.markdown)
-                        .font(.body)
-                        .foregroundStyle(.primary)
-                        .lineSpacing(6)
-                        .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .dynamicTypeSize(.xSmall ... .accessibility3)
+                    MarkdownContentView(markdown: loadedArticle.markdown)
 
                     Link(LocalizedStringKey("article.open_source"), destination: loadedArticle.resolvedURL)
                         .font(.footnote)
@@ -93,6 +86,36 @@ struct ArticleView: View {
             errorMessage = nil
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+}
+
+private struct MarkdownContentView: View {
+    let markdown: String
+
+    var body: some View {
+        if let attributed = try? AttributedString(
+            markdown: markdown,
+            options: AttributedString.MarkdownParsingOptions(
+                interpretedSyntax: .full,
+                failurePolicy: .returnPartiallyParsedIfPossible
+            )
+        ) {
+            Text(attributed)
+                .font(.body)
+                .foregroundStyle(.primary)
+                .lineSpacing(6)
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .dynamicTypeSize(.xSmall ... .accessibility3)
+        } else {
+            Text(markdown)
+                .font(.body)
+                .foregroundStyle(.primary)
+                .lineSpacing(6)
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .dynamicTypeSize(.xSmall ... .accessibility3)
         }
     }
 }

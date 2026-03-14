@@ -6,19 +6,18 @@ struct AboutView: View {
     @State private var loadedArticle: LoadedArticle?
     @State private var isLoading = false
     @State private var errorMessage: String?
-    @Namespace private var glassNamespace
 
     private let feedService = FeedService()
 
     var body: some View {
         NavigationStack {
             ZStack {
-                    Rectangle()
-                        .fill(.ultraThinMaterial)
-                        .ignoresSafeArea()
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                    .ignoresSafeArea()
 
-                    content
-                }
+                content
+            }
             .navigationTitle(LocalizedStringKey("about.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
@@ -34,7 +33,6 @@ struct AboutView: View {
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .fill(.ultraThinMaterial)
                     .frame(height: 92)
-                    .matchedGeometryEffect(id: "aboutCard", in: glassNamespace)
                     .padding(.horizontal, 16)
 
                 ProgressView(LocalizedStringKey("common.loading"))
@@ -56,18 +54,13 @@ struct AboutView: View {
 
                     Divider()
 
-                    Text(loadedArticle.markdown)
-                        .font(.body)
-                        .lineSpacing(6)
-                        .textSelection(.enabled)
-                        .dynamicTypeSize(.xSmall ... .accessibility3)
+                    AboutMarkdownContentView(markdown: loadedArticle.markdown)
 
                     Link(LocalizedStringKey("about.open_source"), destination: loadedArticle.resolvedURL)
                         .font(.footnote)
                 }
                 .padding(18)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-                .matchedGeometryEffect(id: "aboutCard", in: glassNamespace)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
             }
@@ -90,6 +83,34 @@ struct AboutView: View {
             errorMessage = nil
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+}
+
+private struct AboutMarkdownContentView: View {
+    let markdown: String
+
+    var body: some View {
+        if let attributed = try? AttributedString(
+            markdown: markdown,
+            options: AttributedString.MarkdownParsingOptions(
+                interpretedSyntax: .full,
+                failurePolicy: .returnPartiallyParsedIfPossible
+            )
+        ) {
+            Text(attributed)
+                .font(.body)
+                .lineSpacing(6)
+                .textSelection(.enabled)
+                .dynamicTypeSize(.xSmall ... .accessibility3)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        } else {
+            Text(markdown)
+                .font(.body)
+                .lineSpacing(6)
+                .textSelection(.enabled)
+                .dynamicTypeSize(.xSmall ... .accessibility3)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }
