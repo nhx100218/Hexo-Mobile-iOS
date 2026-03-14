@@ -24,3 +24,4 @@
 "error.article_load_failed" = "Could not load article content from this URL.";
 "tab.posts" = "Posts";
 "tab.settings" = "Settings";
+"article.open_source" = "Open Original Link";

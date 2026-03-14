@@ -2,7 +2,9 @@ import FeedKit
 import Foundation
 
 struct LoadedArticle {
-    let html: String
+    let title: String
+    let markdown: String
+    let publishDate: Date?
     let resolvedURL: URL
 }
 
@@ -47,7 +49,15 @@ struct FeedService {
             do {
                 let html = try await fetchHTML(from: candidate)
                 if !html.isEmpty {
-                    return LoadedArticle(html: html, resolvedURL: candidate)
+                    let articleHTML = extractArticleHTML(from: html) ?? html
+                    let markdown = htmlToMarkdown(articleHTML)
+                    let title = extractTitle(from: html) ?? String(localized: "article.title")
+                    return LoadedArticle(
+                        title: title,
+                        markdown: markdown,
+                        publishDate: extractDate(from: candidate.path),
+                        resolvedURL: candidate
+                    )
                 }
             } catch {
                 continue
@@ -118,6 +128,118 @@ struct FeedService {
         return posts.sorted { ($0.publishDate ?? .distantPast) > ($1.publishDate ?? .distantPast) }
     }
 
+    private func extractArticleHTML(from html: String) -> String? {
+        let candidates = [
+            #"<article[^>]*>(.*?)</article>"#,
+            #"<main[^>]*>(.*?)</main>"#,
+            #"<div[^>]*class=[\"'][^\"']*(post-content|article-entry|entry-content)[^\"']*[\"'][^>]*>(.*?)</div>"#
+        ]
+
+        for pattern in candidates {
+            guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) else {
+                continue
+            }
+
+            let range = NSRange(html.startIndex..<html.endIndex, in: html)
+            guard let match = regex.firstMatch(in: html, options: [], range: range) else { continue }
+
+            let captureIndex = match.numberOfRanges > 2 ? 2 : 1
+            if let capture = Range(match.range(at: captureIndex), in: html) {
+                let value = String(html[capture]).trimmingCharacters(in: .whitespacesAndNewlines)
+                if !value.isEmpty {
+                    return value
+                }
+            }
+        }
+
+        return nil
+    }
+
+    private func extractTitle(from html: String) -> String? {
+        let candidates = [
+            #"<h1[^>]*class=[\"'][^\"']*(post-title|article-title)[^\"']*[\"'][^>]*>(.*?)</h1>"#,
+            #"<h1[^>]*>(.*?)</h1>"#,
+            #"<title[^>]*>(.*?)</title>"#
+        ]
+
+        for pattern in candidates {
+            guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) else {
+                continue
+            }
+
+            let range = NSRange(html.startIndex..<html.endIndex, in: html)
+            guard let match = regex.firstMatch(in: html, options: [], range: range),
+                  let titleRange = Range(match.range(at: 1), in: html) else { continue }
+
+            let title = stripHTMLTags(from: String(html[titleRange]))
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if !title.isEmpty {
+                return title
+            }
+        }
+
+        return nil
+    }
+
+    private func htmlToMarkdown(_ html: String) -> String {
+        var output = html
+
+        let replacementRules: [(String, String)] = [
+            (#"<h1[^>]*>(.*?)</h1>"#, "# $1\n\n"),
+            (#"<h2[^>]*>(.*?)</h2>"#, "## $1\n\n"),
+            (#"<h3[^>]*>(.*?)</h3>"#, "### $1\n\n"),
+            (#"<h4[^>]*>(.*?)</h4>"#, "#### $1\n\n"),
+            (#"<strong[^>]*>(.*?)</strong>"#, "**$1**"),
+            (#"<b[^>]*>(.*?)</b>"#, "**$1**"),
+            (#"<em[^>]*>(.*?)</em>"#, "*$1*"),
+            (#"<i[^>]*>(.*?)</i>"#, "*$1*"),
+            (#"<code[^>]*>(.*?)</code>"#, "`$1`"),
+            (#"<pre[^>]*>(.*?)</pre>"#, "```\n$1\n```\n\n"),
+            (#"<li[^>]*>(.*?)</li>"#, "- $1\n"),
+            (#"<p[^>]*>(.*?)</p>"#, "$1\n\n"),
+            (#"<br\s*/?>"#, "\n")
+        ]
+
+        for (pattern, template) in replacementRules {
+            output = output.replacingOccurrences(
+                of: pattern,
+                with: template,
+                options: [.regularExpression, .caseInsensitive]
+            )
+        }
+
+        if let anchorRegex = try? NSRegularExpression(pattern: #"<a[^>]*href=[\"']([^\"']+)[\"'][^>]*>(.*?)</a>"#, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
+            let range = NSRange(output.startIndex..<output.endIndex, in: output)
+            let matches = anchorRegex.matches(in: output, options: [], range: range).reversed()
+
+            for match in matches {
+                guard let hrefRange = Range(match.range(at: 1), in: output),
+                      let textRange = Range(match.range(at: 2), in: output),
+                      let fullRange = Range(match.range(at: 0), in: output) else { continue }
+
+                let href = String(output[hrefRange])
+                let text = stripHTMLTags(from: String(output[textRange]))
+                output.replaceSubrange(fullRange, with: "[\(text)](\(href))")
+            }
+        }
+
+        output = stripHTMLTags(from: output)
+        output = decodeHTMLEntities(in: output)
+        output = output.replacingOccurrences(of: #"\n{3,}"#, with: "\n\n", options: .regularExpression)
+
+        return output.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func decodeHTMLEntities(in text: String) -> String {
+        text
+            .replacingOccurrences(of: "&nbsp;", with: " ")
+            .replacingOccurrences(of: "&amp;", with: "&")
+            .replacingOccurrences(of: "&quot;", with: "\"")
+            .replacingOccurrences(of: "&#39;", with: "'")
+            .replacingOccurrences(of: "&lt;", with: "<")
+            .replacingOccurrences(of: "&gt;", with: ">")
+    }
+
     private func isLikelyHexoArticlePath(_ path: String) -> Bool {
         let segments = path.split(separator: "/").map(String.init)
         guard segments.count >= 4 else { return false }
@@ -132,10 +254,6 @@ struct FeedService {
 
     private func stripHTMLTags(from html: String) -> String {
         html.replacingOccurrences(of: #"<[^>]+>"#, with: "", options: .regularExpression)
-            .replacingOccurrences(of: "&nbsp;", with: " ")
-            .replacingOccurrences(of: "&amp;", with: "&")
-            .replacingOccurrences(of: "&quot;", with: "\"")
-            .replacingOccurrences(of: "&#39;", with: "'")
     }
 
     private func extractDate(from path: String) -> Date? {

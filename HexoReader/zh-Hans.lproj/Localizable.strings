@@ -24,3 +24,4 @@
 "error.article_load_failed" = "无法从该链接加载文章内容。";
 "tab.posts" = "文章";
 "tab.settings" = "设置";
+"article.open_source" = "打开原文链接";
