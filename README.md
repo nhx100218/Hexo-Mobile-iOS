@@ -54,7 +54,7 @@ The workflow at `.github/workflows/build-ios.yml` runs on every push to `main` a
 
 1. Checks out the repository
 2. Archives the app without code signing
-3. Exports an unsigned IPA using `ExportOptions.plist`
+3. Packages an unsigned IPA directly from the archived `.app` (no signing/export options needed)
 4. Uploads the IPA artifact (`HexoReader-ipa`)
 
 Manual equivalent:
@@ -69,11 +69,14 @@ xcodebuild \
   archive \
   -archivePath build/HexoReader.xcarchive
 
-xcodebuild -exportArchive \
-  -archivePath build/HexoReader.xcarchive \
-  -exportPath build \
-  -exportOptionsPlist ExportOptions.plist \
-  CODE_SIGNING_ALLOWED=NO
+APP_PATH=$(find build/HexoReader.xcarchive/Products/Applications -maxdepth 1 -name "*.app" -print -quit)
+mkdir -p build/Payload
+cp -R "$APP_PATH" build/Payload/
+(
+  cd build
+  /usr/bin/zip -qry HexoReader.ipa Payload
+)
+rm -rf build/Payload
 ```
 
 ## Sideloading the IPA
