@@ -1,6 +1,13 @@
 import FeedKit
 import Foundation
 
+struct LoadedArticle {
+    let title: String
+    let markdown: String
+    let publishDate: Date?
+    let resolvedURL: URL
+}
+
 struct FeedService {
     func fetchPosts(feedURL: URL) async throws -> [Post] {
         let (data, response) = try await URLSession.shared.data(from: feedURL)
@@ -14,7 +21,7 @@ struct FeedService {
 
         switch result {
         case .success(let feed):
-            let posts = map(feed: feed)
+            let posts = map(feed: feed, sourceURL: feedURL)
             if posts.isEmpty {
                 throw FeedServiceError.noPosts
             }
@@ -24,20 +31,260 @@ struct FeedService {
         }
     }
 
-    private func map(feed: Feed) -> [Post] {
+    func fetchPostsFromHexoHTML(baseURL: URL) async throws -> [Post] {
+        let html = try await fetchHTML(from: baseURL)
+        let extractedPosts = extractHexoPosts(from: html, baseURL: baseURL)
+
+        guard !extractedPosts.isEmpty else {
+            throw FeedServiceError.noPosts
+        }
+
+        return extractedPosts
+    }
+
+    func loadArticle(from url: URL) async throws -> LoadedArticle {
+        let candidates = buildCandidateArticleURLs(from: url)
+
+        for candidate in candidates {
+            do {
+                let html = try await fetchHTML(from: candidate)
+                if !html.isEmpty {
+                    let articleHTML = extractArticleHTML(from: html) ?? html
+                    let markdown = htmlToMarkdown(articleHTML)
+                    let title = extractTitle(from: html) ?? String(localized: "article.title")
+                    return LoadedArticle(
+                        title: title,
+                        markdown: markdown,
+                        publishDate: extractDate(from: candidate.path),
+                        resolvedURL: candidate
+                    )
+                }
+            } catch {
+                continue
+            }
+        }
+
+        throw FeedServiceError.articleLoadFailed
+    }
+
+    private func fetchHTML(from url: URL) async throws -> String {
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 15
+        request.setValue("text/html,application/xhtml+xml", forHTTPHeaderField: "Accept")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200..<300).contains(httpResponse.statusCode) else {
+            throw FeedServiceError.invalidResponse
+        }
+
+        return String(data: data, encoding: .utf8)
+            ?? String(data: data, encoding: .unicode)
+            ?? String(decoding: data, as: UTF8.self)
+    }
+
+    private func extractHexoPosts(from html: String, baseURL: URL) -> [Post] {
+        let pattern = #"<a[^>]*href=[\"']([^\"']+)[\"'][^>]*>(.*?)</a>"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) else {
+            return []
+        }
+
+        let nsRange = NSRange(html.startIndex..<html.endIndex, in: html)
+        let matches = regex.matches(in: html, options: [], range: nsRange)
+
+        var posts: [Post] = []
+        var seen = Set<String>()
+
+        for match in matches {
+            guard let hrefRange = Range(match.range(at: 1), in: html),
+                  let titleRange = Range(match.range(at: 2), in: html) else {
+                continue
+            }
+
+            let rawHref = String(html[hrefRange])
+            guard let url = resolveArticleURL(rawHref, sourceURL: baseURL) else { continue }
+            guard isLikelyHexoArticlePath(url.path) else { continue }
+
+            let titleHTML = String(html[titleRange])
+            let cleanTitle = stripHTMLTags(from: titleHTML)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+
+            guard !cleanTitle.isEmpty else { continue }
+
+            let dedupeKey = url.absoluteString
+            guard !seen.contains(dedupeKey) else { continue }
+            seen.insert(dedupeKey)
+
+            posts.append(
+                Post(
+                    title: cleanTitle,
+                    publishDate: extractDate(from: url.path),
+                    summary: String(localized: "article.no_summary"),
+                    link: url
+                )
+            )
+        }
+
+        return posts.sorted { ($0.publishDate ?? .distantPast) > ($1.publishDate ?? .distantPast) }
+    }
+
+    private func extractArticleHTML(from html: String) -> String? {
+        let candidates = [
+            #"<article[^>]*>(.*?)</article>"#,
+            #"<main[^>]*>(.*?)</main>"#,
+            #"<div[^>]*class=[\"'][^\"']*(post-content|article-entry|entry-content)[^\"']*[\"'][^>]*>(.*?)</div>"#
+        ]
+
+        for pattern in candidates {
+            guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) else {
+                continue
+            }
+
+            let range = NSRange(html.startIndex..<html.endIndex, in: html)
+            guard let match = regex.firstMatch(in: html, options: [], range: range) else { continue }
+
+            let captureIndex = match.numberOfRanges > 2 ? 2 : 1
+            if let capture = Range(match.range(at: captureIndex), in: html) {
+                let value = String(html[capture]).trimmingCharacters(in: .whitespacesAndNewlines)
+                if !value.isEmpty {
+                    return value
+                }
+            }
+        }
+
+        return nil
+    }
+
+    private func extractTitle(from html: String) -> String? {
+        let candidates = [
+            #"<h1[^>]*class=[\"'][^\"']*(post-title|article-title)[^\"']*[\"'][^>]*>(.*?)</h1>"#,
+            #"<h1[^>]*>(.*?)</h1>"#,
+            #"<title[^>]*>(.*?)</title>"#
+        ]
+
+        for pattern in candidates {
+            guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) else {
+                continue
+            }
+
+            let range = NSRange(html.startIndex..<html.endIndex, in: html)
+            guard let match = regex.firstMatch(in: html, options: [], range: range),
+                  let titleRange = Range(match.range(at: 1), in: html) else { continue }
+
+            let title = stripHTMLTags(from: String(html[titleRange]))
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if !title.isEmpty {
+                return title
+            }
+        }
+
+        return nil
+    }
+
+    private func htmlToMarkdown(_ html: String) -> String {
+        var output = html
+
+        let replacementRules: [(String, String)] = [
+            (#"<h1[^>]*>(.*?)</h1>"#, "# $1\n\n"),
+            (#"<h2[^>]*>(.*?)</h2>"#, "## $1\n\n"),
+            (#"<h3[^>]*>(.*?)</h3>"#, "### $1\n\n"),
+            (#"<h4[^>]*>(.*?)</h4>"#, "#### $1\n\n"),
+            (#"<strong[^>]*>(.*?)</strong>"#, "**$1**"),
+            (#"<b[^>]*>(.*?)</b>"#, "**$1**"),
+            (#"<em[^>]*>(.*?)</em>"#, "*$1*"),
+            (#"<i[^>]*>(.*?)</i>"#, "*$1*"),
+            (#"<code[^>]*>(.*?)</code>"#, "`$1`"),
+            (#"<pre[^>]*>(.*?)</pre>"#, "```\n$1\n```\n\n"),
+            (#"<li[^>]*>(.*?)</li>"#, "- $1\n"),
+            (#"<p[^>]*>(.*?)</p>"#, "$1\n\n"),
+            (#"<br\s*/?>"#, "\n")
+        ]
+
+        for (pattern, template) in replacementRules {
+            output = output.replacingOccurrences(
+                of: pattern,
+                with: template,
+                options: [.regularExpression, .caseInsensitive]
+            )
+        }
+
+        if let anchorRegex = try? NSRegularExpression(pattern: #"<a[^>]*href=[\"']([^\"']+)[\"'][^>]*>(.*?)</a>"#, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
+            let range = NSRange(output.startIndex..<output.endIndex, in: output)
+            let matches = anchorRegex.matches(in: output, options: [], range: range).reversed()
+
+            for match in matches {
+                guard let hrefRange = Range(match.range(at: 1), in: output),
+                      let textRange = Range(match.range(at: 2), in: output),
+                      let fullRange = Range(match.range(at: 0), in: output) else { continue }
+
+                let href = String(output[hrefRange])
+                let text = stripHTMLTags(from: String(output[textRange]))
+                output.replaceSubrange(fullRange, with: "[\(text)](\(href))")
+            }
+        }
+
+        output = stripHTMLTags(from: output)
+        output = decodeHTMLEntities(in: output)
+        output = output.replacingOccurrences(of: #"\n{3,}"#, with: "\n\n", options: .regularExpression)
+
+        return output.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func decodeHTMLEntities(in text: String) -> String {
+        text
+            .replacingOccurrences(of: "&nbsp;", with: " ")
+            .replacingOccurrences(of: "&amp;", with: "&")
+            .replacingOccurrences(of: "&quot;", with: "\"")
+            .replacingOccurrences(of: "&#39;", with: "'")
+            .replacingOccurrences(of: "&lt;", with: "<")
+            .replacingOccurrences(of: "&gt;", with: ">")
+    }
+
+    private func isLikelyHexoArticlePath(_ path: String) -> Bool {
+        let segments = path.split(separator: "/").map(String.init)
+        guard segments.count >= 4 else { return false }
+
+        let year = segments[0]
+        let month = segments[1]
+        let day = segments[2]
+        return year.range(of: #"^\d{4}$"#, options: .regularExpression) != nil
+            && month.range(of: #"^\d{2}$"#, options: .regularExpression) != nil
+            && day.range(of: #"^\d{2}$"#, options: .regularExpression) != nil
+    }
+
+    private func stripHTMLTags(from html: String) -> String {
+        html.replacingOccurrences(of: #"<[^>]+>"#, with: "", options: .regularExpression)
+    }
+
+    private func extractDate(from path: String) -> Date? {
+        let segments = path.split(separator: "/")
+        guard segments.count >= 3 else { return nil }
+
+        let yyyy = String(segments[0])
+        let mm = String(segments[1])
+        let dd = String(segments[2])
+        let dateString = "\(yyyy)-\(mm)-\(dd)"
+
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: dateString)
+    }
+
+    private func map(feed: Feed, sourceURL: URL) -> [Post] {
         switch feed {
         case .rss(let rss):
             return rss.items?.compactMap { item in
                 guard let title = item.title,
                       let linkString = item.link,
-                      let link = URL(string: linkString) else {
+                      let link = resolveArticleURL(linkString, sourceURL: sourceURL) else {
                     return nil
                 }
 
                 return Post(
                     title: title,
                     publishDate: item.pubDate,
-                    summary: item.description ?? item.content?.contentEncoded ?? "No summary available.",
+                    summary: item.description ?? item.content?.contentEncoded ?? String(localized: "article.no_summary"),
                     link: link
                 )
             } ?? []
@@ -46,14 +293,14 @@ struct FeedService {
             return atom.entries?.compactMap { entry in
                 guard let title = entry.title,
                       let href = entry.links?.first?.attributes?.href,
-                      let link = URL(string: href) else {
+                      let link = resolveArticleURL(href, sourceURL: sourceURL) else {
                     return nil
                 }
 
                 return Post(
                     title: title,
                     publishDate: entry.updated,
-                    summary: entry.summary?.value ?? "No summary available.",
+                    summary: entry.summary?.value ?? String(localized: "article.no_summary"),
                     link: link
                 )
             } ?? []
@@ -62,21 +309,55 @@ struct FeedService {
             return []
         }
     }
+
+    private func resolveArticleURL(_ linkString: String, sourceURL: URL) -> URL? {
+        if let absoluteURL = URL(string: linkString), absoluteURL.scheme != nil {
+            return absoluteURL
+        }
+
+        return URL(string: linkString, relativeTo: sourceURL)?.absoluteURL
+    }
+
+    private func buildCandidateArticleURLs(from url: URL) -> [URL] {
+        var candidates: [URL] = [url]
+
+        var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        let path = components?.path ?? ""
+
+        if !path.lowercased().hasSuffix(".html") {
+            var normalizedPath = path
+            if !normalizedPath.hasSuffix("/") {
+                normalizedPath += "/"
+            }
+
+            components?.path = normalizedPath + "index.html"
+            components?.query = nil
+            components?.fragment = nil
+            if let fallbackURL = components?.url {
+                candidates.append(fallbackURL)
+            }
+        }
+
+        return Array(NSOrderedSet(array: candidates)) as? [URL] ?? candidates
+    }
 }
 
 enum FeedServiceError: LocalizedError {
     case invalidResponse
     case parseFailed
     case noPosts
+    case articleLoadFailed
 
     var errorDescription: String? {
         switch self {
         case .invalidResponse:
-            return "Feed server returned an unexpected response."
+            return String(localized: "error.feed_invalid_response")
         case .parseFailed:
-            return "Could not parse feed data."
+            return String(localized: "error.feed_parse_failed")
         case .noPosts:
-            return "Feed loaded successfully, but no posts were found."
+            return String(localized: "error.feed_no_posts")
+        case .articleLoadFailed:
+            return String(localized: "error.article_load_failed")
         }
     }
 }
