@@ -2,31 +2,47 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var viewModel: BlogViewModel
+    var dismissAfterSave: Bool = true
+
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         Form {
-            Section("Blog") {
-                TextField("https://blog.example.com", text: $viewModel.baseURL)
+            Section(LocalizedStringKey("settings.blog_section")) {
+                TextField(LocalizedStringKey("settings.blog_placeholder"), text: $viewModel.baseURL)
                     .textInputAutocapitalization(.never)
                     .keyboardType(.URL)
                     .autocorrectionDisabled()
             }
 
+            Section(LocalizedStringKey("settings.language_section")) {
+                Picker(LocalizedStringKey("settings.language_label"), selection: $viewModel.selectedLanguage) {
+                    Text(LocalizedStringKey("language.chinese")).tag(AppLanguage.chinese)
+                    Text(LocalizedStringKey("language.english")).tag(AppLanguage.english)
+                }
+                .pickerStyle(.segmented)
+            }
+
             Section {
-                Button("Save & Refresh") {
+                Button(LocalizedStringKey("settings.save_refresh")) {
                     viewModel.saveBaseURL()
                     Task {
                         await viewModel.loadPosts()
-                        dismiss()
+                        if dismissAfterSave {
+                            dismiss()
+                        }
                     }
                 }
+                .font(.headline)
                 .frame(maxWidth: .infinity)
+                .padding(.vertical, 6)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
+            .listRowBackground(Color.clear)
         }
         .scrollContentBackground(.hidden)
         .background(.ultraThinMaterial)
-        .navigationTitle("Settings")
+        .navigationTitle(LocalizedStringKey("settings.title"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
