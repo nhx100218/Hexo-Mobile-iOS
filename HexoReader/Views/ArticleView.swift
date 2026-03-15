@@ -149,6 +149,7 @@ private struct TwikooCommentsView: UIViewRepresentable {
         webView.scrollView.backgroundColor = UIColor.clear
         return webView
     }
+}
 
     func updateUIView(_ uiView: WKWebView, context: Context) {
         uiView.loadHTMLString(htmlTemplate, baseURL: URL(string: "https://twikoo.js.org"))
