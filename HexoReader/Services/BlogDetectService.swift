@@ -56,9 +56,9 @@ enum BlogDetectError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidURL:
-            return "Please enter a valid blog URL."
+            return String(localized: "error.invalid_blog_url")
         case .feedNotFound:
-            return "No supported feed found at /atom.xml, /rss.xml, or /feed.xml."
+            return String(localized: "error.feed_not_found")
         }
     }
 }
