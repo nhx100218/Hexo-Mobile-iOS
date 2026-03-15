@@ -44,11 +44,13 @@ struct FeedService {
 
     func loadArticle(from url: URL) async throws -> LoadedArticle {
         let markdownCandidates = buildMarkdownCandidateURLs(from: url)
+
         for candidate in markdownCandidates {
             if let markdown = try await fetchMarkdownIfAvailable(from: candidate), !markdown.isEmpty {
+                let normalizedMarkdown = sanitizeMarkdownForDisplay(markdown)
                 return LoadedArticle(
-                    title: titleFromURL(url),
-                    markdown: markdown,
+                    title: extractTitleFromMarkdown(normalizedMarkdown) ?? titleFromURL(candidate),
+                    markdown: normalizedMarkdown,
                     publishDate: extractDate(from: candidate.path),
                     resolvedURL: candidate
                 )
@@ -59,10 +61,12 @@ struct FeedService {
         for candidate in htmlCandidates {
             do {
                 let html = try await fetchHTML(from: candidate)
-                if !html.isEmpty {
-                    let articleHTML = extractArticleHTML(from: html) ?? html
-                    let markdown = htmlToMarkdown(articleHTML)
-                    let title = extractTitle(from: html) ?? titleFromURL(candidate)
+                let cleanHTML = removeNoiseSections(from: html)
+                let articleHTML = extractArticleHTML(from: cleanHTML) ?? cleanHTML
+                let markdown = sanitizeMarkdownForDisplay(htmlToMarkdown(articleHTML))
+                let title = extractTitle(from: cleanHTML) ?? titleFromURL(candidate)
+
+                if !markdown.isEmpty {
                     return LoadedArticle(
                         title: title,
                         markdown: markdown,
@@ -92,7 +96,7 @@ struct FeedService {
             if let markdown = try await fetchMarkdownIfAvailable(from: candidate), !markdown.isEmpty {
                 return LoadedArticle(
                     title: String(localized: "about.title"),
-                    markdown: markdown,
+                    markdown: sanitizeMarkdownForDisplay(markdown),
                     publishDate: nil,
                     resolvedURL: candidate
                 )
@@ -103,11 +107,13 @@ struct FeedService {
         for candidate in htmlCandidates {
             do {
                 let html = try await fetchHTML(from: candidate)
-                let articleHTML = extractArticleHTML(from: html) ?? html
-                let title = extractTitle(from: html) ?? String(localized: "about.title")
+                let cleanHTML = removeNoiseSections(from: html)
+                let articleHTML = extractArticleHTML(from: cleanHTML) ?? cleanHTML
+                let title = extractTitle(from: cleanHTML) ?? String(localized: "about.title")
+
                 return LoadedArticle(
                     title: title,
-                    markdown: htmlToMarkdown(articleHTML),
+                    markdown: sanitizeMarkdownForDisplay(htmlToMarkdown(articleHTML)),
                     publishDate: nil,
                     resolvedURL: candidate
                 )
@@ -149,11 +155,11 @@ struct FeedService {
             ?? String(data: data, encoding: .unicode)
             ?? String(decoding: data, as: UTF8.self)
 
-        if markdown.contains("<html") || markdown.contains("<!DOCTYPE html") {
+        if markdown.localizedCaseInsensitiveContains("<html") || markdown.localizedCaseInsensitiveContains("<!DOCTYPE html") {
             return nil
         }
 
-        return markdown.trimmingCharacters(in: .whitespacesAndNewlines)
+        return markdown
     }
 
     private func fetchHTML(from url: URL) async throws -> String {
@@ -217,6 +223,25 @@ struct FeedService {
         return posts.sorted { ($0.publishDate ?? .distantPast) > ($1.publishDate ?? .distantPast) }
     }
 
+    private func removeNoiseSections(from html: String) -> String {
+        var cleaned = html
+
+        let noisyBlocks = [
+            #"<script[^>]*>.*?</script>"#,
+            #"<style[^>]*>.*?</style>"#,
+            #"<noscript[^>]*>.*?</noscript>"#,
+            #"<footer[^>]*>.*?</footer>"#,
+            #"<section[^>]*(id|class)=[\"'][^\"']*(comment|comments|comment-box|vcomment|vcomments|waline|twikoo|giscus)[^\"']*[\"'][^>]*>.*?</section>"#,
+            #"<div[^>]*(id|class)=[\"'][^\"']*(comment|comments|comment-box|vcomment|vcomments|waline|twikoo|giscus|post-meta|post-copyright|toc|pagination)[^\"']*[\"'][^>]*>.*?</div>"#
+        ]
+
+        for pattern in noisyBlocks {
+            cleaned = cleaned.replacingOccurrences(of: pattern, with: "", options: [.regularExpression, .caseInsensitive])
+        }
+
+        return cleaned
+    }
+
     private func extractArticleHTML(from html: String) -> String? {
         let candidates = [
             #"<article[^>]*>(.*?)</article>"#,
@@ -233,12 +258,10 @@ struct FeedService {
             guard let match = regex.firstMatch(in: html, options: [], range: range) else { continue }
 
             let captureIndex = match.numberOfRanges > 2 ? 2 : 1
-            if let capture = Range(match.range(at: captureIndex), in: html) {
-                let value = String(html[capture]).trimmingCharacters(in: .whitespacesAndNewlines)
-                if !value.isEmpty {
-                    return value
-                }
-            }
+            guard let capture = Range(match.range(at: captureIndex), in: html) else { continue }
+
+            let value = String(html[capture]).trimmingCharacters(in: .whitespacesAndNewlines)
+            if !value.isEmpty { return value }
         }
 
         return nil
@@ -257,8 +280,10 @@ struct FeedService {
             }
 
             let range = NSRange(html.startIndex..<html.endIndex, in: html)
-            guard let match = regex.firstMatch(in: html, options: [], range: range),
-                  let titleRange = Range(match.range(at: 1), in: html) else { continue }
+            guard let match = regex.firstMatch(in: html, options: [], range: range) else { continue }
+
+            let captureIndex = match.numberOfRanges > 2 ? 2 : 1
+            guard let titleRange = Range(match.range(at: captureIndex), in: html) else { continue }
 
             let title = stripHTMLTags(from: String(html[titleRange]))
                 .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -274,27 +299,28 @@ struct FeedService {
         var output = html
 
         let replacementRules: [(String, String)] = [
-            (#"<h1[^>]*>(.*?)</h1>"#, "# $1\n\n"),
-            (#"<h2[^>]*>(.*?)</h2>"#, "## $1\n\n"),
-            (#"<h3[^>]*>(.*?)</h3>"#, "### $1\n\n"),
-            (#"<h4[^>]*>(.*?)</h4>"#, "#### $1\n\n"),
+            (#"<h1[^>]*>(.*?)</h1>"#, "\n# $1\n\n"),
+            (#"<h2[^>]*>(.*?)</h2>"#, "\n## $1\n\n"),
+            (#"<h3[^>]*>(.*?)</h3>"#, "\n### $1\n\n"),
+            (#"<h4[^>]*>(.*?)</h4>"#, "\n#### $1\n\n"),
+            (#"<h5[^>]*>(.*?)</h5>"#, "\n##### $1\n\n"),
+            (#"<h6[^>]*>(.*?)</h6>"#, "\n###### $1\n\n"),
             (#"<strong[^>]*>(.*?)</strong>"#, "**$1**"),
             (#"<b[^>]*>(.*?)</b>"#, "**$1**"),
             (#"<em[^>]*>(.*?)</em>"#, "*$1*"),
             (#"<i[^>]*>(.*?)</i>"#, "*$1*"),
             (#"<code[^>]*>(.*?)</code>"#, "`$1`"),
-            (#"<pre[^>]*>(.*?)</pre>"#, "```\n$1\n```\n\n"),
+            (#"<pre[^>]*>(.*?)</pre>"#, "\n```\n$1\n```\n\n"),
+            (#"<blockquote[^>]*>(.*?)</blockquote>"#, "\n> $1\n\n"),
             (#"<li[^>]*>(.*?)</li>"#, "- $1\n"),
+            (#"</(ul|ol)>"#, "\n"),
             (#"<p[^>]*>(.*?)</p>"#, "$1\n\n"),
+            (#"<div[^>]*>(.*?)</div>"#, "$1\n"),
             (#"<br\s*/?>"#, "\n")
         ]
 
         for (pattern, template) in replacementRules {
-            output = output.replacingOccurrences(
-                of: pattern,
-                with: template,
-                options: [.regularExpression, .caseInsensitive]
-            )
+            output = output.replacingOccurrences(of: pattern, with: template, options: [.regularExpression, .caseInsensitive])
         }
 
         if let anchorRegex = try? NSRegularExpression(pattern: #"<a[^>]*href=[\"']([^\"']+)[\"'][^>]*>(.*?)</a>"#, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
@@ -307,16 +333,62 @@ struct FeedService {
                       let fullRange = Range(match.range(at: 0), in: output) else { continue }
 
                 let href = String(output[hrefRange])
-                let text = stripHTMLTags(from: String(output[textRange]))
-                output.replaceSubrange(fullRange, with: "[\(text)](\(href))")
+                let text = stripHTMLTags(from: String(output[textRange])).trimmingCharacters(in: .whitespacesAndNewlines)
+                output.replaceSubrange(fullRange, with: text.isEmpty ? href : "[\(text)](\(href))")
             }
         }
 
         output = stripHTMLTags(from: output)
         output = decodeHTMLEntities(in: output)
+
+        return output
+    }
+
+    private func sanitizeMarkdownForDisplay(_ text: String) -> String {
+        var output = text
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+
+        // Remove low-value non-content lines often found in comment/footer widgets.
+        let noiseLinePatterns = [
+            #"^\s*评论.*$"#,
+            #"^\s*匿名评论.*$"#,
+            #"^\s*隐私政策.*$"#,
+            #"^\s*归档.*$"#,
+            #"^\s*网站资讯.*$"#,
+            #"^\s*文章总数.*$"#,
+            #"^\s*建站天数.*$"#
+        ]
+
+        output = output
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .map(String.init)
+            .filter { line in
+                !noiseLinePatterns.contains { pattern in
+                    line.range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil
+                }
+            }
+            .joined(separator: "\n")
+
+        // Keep markdown syntax, but normalize spacing so parser can render headings/lists.
+        output = output.replacingOccurrences(of: #"(^|\n)(#{1,6})([^\s#])"#, with: "$1$2 $3", options: .regularExpression)
         output = output.replacingOccurrences(of: #"\n{3,}"#, with: "\n\n", options: .regularExpression)
 
         return output.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func extractTitleFromMarkdown(_ markdown: String) -> String? {
+        for line in markdown.split(separator: "\n").map(String.init) {
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { continue }
+
+            if trimmed.hasPrefix("#") {
+                let title = trimmed.replacingOccurrences(of: #"^#{1,6}\s*"#, with: "", options: .regularExpression)
+                if !title.isEmpty { return title }
+            }
+        }
+
+        return nil
     }
 
     private func decodeHTMLEntities(in text: String) -> String {
@@ -347,8 +419,15 @@ struct FeedService {
 
     private func titleFromURL(_ url: URL) -> String {
         let components = url.pathComponents.filter { $0 != "/" }
-        return components.last?.replacingOccurrences(of: "-", with: " ").capitalized
-            ?? String(localized: "article.title")
+        if let raw = components.last {
+            return raw
+                .replacingOccurrences(of: ".md", with: "")
+                .replacingOccurrences(of: ".html", with: "")
+                .replacingOccurrences(of: "-", with: " ")
+                .capitalized
+        }
+
+        return String(localized: "article.title")
     }
 
     private func extractDate(from path: String) -> Date? {
