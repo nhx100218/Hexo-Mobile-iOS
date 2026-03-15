@@ -1,8 +1,14 @@
 import SwiftUI
 
+private enum AppTab: Hashable {
+    case posts
+    case about
+}
+
 @main
 struct HexoReaderApp: App {
     @StateObject private var viewModel = BlogViewModel()
+    @State private var selectedTab: AppTab = .posts
 
     var body: some Scene {
         WindowGroup {
@@ -22,5 +28,6 @@ struct HexoReaderApp: App {
             .background(.ultraThinMaterial)
             .environment(\.locale, Locale(identifier: viewModel.selectedLanguage.localeIdentifier))
         }
+        .buttonStyle(.plain)
     }
 }
