@@ -65,6 +65,17 @@ struct ArticleView: View {
                         .font(.footnote)
                         .foregroundStyle(.blue)
                         .padding(.top, 8)
+
+                    if let envID = loadedArticle.twikooEnvID, !envID.isEmpty {
+                        Divider()
+                            .padding(.top, 8)
+
+                        Text(LocalizedStringKey("article.comments"))
+                            .font(.headline)
+
+                        TwikooCommentsView(envID: envID, pagePath: loadedArticle.pagePath)
+                            .frame(minHeight: 420)
+                    }
                 }
                 .padding(18)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
@@ -88,7 +99,6 @@ struct ArticleView: View {
             errorMessage = error.localizedDescription
         }
     }
-}
 
 private struct MarkdownContentView: View {
     let markdown: String
@@ -117,5 +127,50 @@ private struct MarkdownContentView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .dynamicTypeSize(.xSmall ... .accessibility3)
         }
+    }
+}
+
+private struct TwikooCommentsView: UIViewRepresentable {
+    let envID: String
+    let pagePath: String
+
+    func makeUIView(context: Context) -> WKWebView {
+        let webView = WKWebView(frame: .zero)
+        webView.isOpaque = false
+        webView.backgroundColor = .clear
+        webView.scrollView.backgroundColor = .clear
+        return webView
+    }
+}
+
+    func updateUIView(_ uiView: WKWebView, context: Context) {
+        uiView.loadHTMLString(htmlTemplate, baseURL: URL(string: "https://twikoo.js.org"))
+    }
+
+    private var htmlTemplate: String {
+        """
+        <!doctype html>
+        <html>
+        <head>
+          <meta charset='utf-8'>
+          <meta name='viewport' content='width=device-width, initial-scale=1'>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; background: transparent; }
+            #twikoo { margin: 0; }
+          </style>
+          <script src='https://cdn.staticfile.net/twikoo/1.6.39/twikoo.all.min.js'></script>
+        </head>
+        <body>
+          <div id='twikoo'></div>
+          <script>
+            twikoo.init({
+              envId: '\(envID)',
+              el: '#twikoo',
+              path: '\(pagePath)'
+            })
+          </script>
+        </body>
+        </html>
+        """
     }
 }

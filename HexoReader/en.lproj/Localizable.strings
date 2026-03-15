@@ -29,3 +29,4 @@
 "about.title" = "About Blog";
 "about.load_failed" = "Unable to Load About Page";
 "about.open_source" = "Open About Source";
+"article.comments" = "Comments";

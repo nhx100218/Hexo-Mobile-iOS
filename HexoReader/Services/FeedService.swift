@@ -6,6 +6,8 @@ struct LoadedArticle {
     let markdown: String
     let publishDate: Date?
     let resolvedURL: URL
+    let twikooEnvID: String?
+    let pagePath: String
 }
 
 struct FeedService {
@@ -52,7 +54,9 @@ struct FeedService {
                     title: extractTitleFromMarkdown(normalizedMarkdown) ?? titleFromURL(candidate),
                     markdown: normalizedMarkdown,
                     publishDate: extractDate(from: candidate.path),
-                    resolvedURL: candidate
+                    resolvedURL: candidate,
+                    twikooEnvID: nil,
+                    pagePath: candidate.path
                 )
             }
         }
@@ -62,6 +66,21 @@ struct FeedService {
             do {
                 let html = try await fetchHTML(from: candidate)
                 let cleanHTML = removeNoiseSections(from: html)
+
+                if let mdSourceURL = extractMarkdownSourceURL(from: cleanHTML, sourceURL: candidate),
+                   let sourceMarkdown = try await fetchMarkdownIfAvailable(from: mdSourceURL),
+                   !sourceMarkdown.isEmpty {
+                    let normalized = sanitizeMarkdownForDisplay(sourceMarkdown)
+                    return LoadedArticle(
+                        title: extractTitleFromMarkdown(normalized) ?? extractTitle(from: cleanHTML) ?? titleFromURL(candidate),
+                        markdown: normalized,
+                        publishDate: extractDate(from: candidate.path),
+                        resolvedURL: candidate,
+                        twikooEnvID: extractTwikooEnvID(from: cleanHTML),
+                        pagePath: candidate.path
+                    )
+                }
+
                 let articleHTML = extractArticleHTML(from: cleanHTML) ?? cleanHTML
                 let markdown = sanitizeMarkdownForDisplay(htmlToMarkdown(articleHTML))
                 let title = extractTitle(from: cleanHTML) ?? titleFromURL(candidate)
@@ -71,7 +90,9 @@ struct FeedService {
                         title: title,
                         markdown: markdown,
                         publishDate: extractDate(from: candidate.path),
-                        resolvedURL: candidate
+                        resolvedURL: candidate,
+                        twikooEnvID: extractTwikooEnvID(from: cleanHTML),
+                        pagePath: candidate.path
                     )
                 }
             } catch {
@@ -98,7 +119,9 @@ struct FeedService {
                     title: String(localized: "about.title"),
                     markdown: sanitizeMarkdownForDisplay(markdown),
                     publishDate: nil,
-                    resolvedURL: candidate
+                    resolvedURL: candidate,
+                    twikooEnvID: nil,
+                    pagePath: candidate.path
                 )
             }
         }
@@ -115,7 +138,9 @@ struct FeedService {
                     title: title,
                     markdown: sanitizeMarkdownForDisplay(htmlToMarkdown(articleHTML)),
                     publishDate: nil,
-                    resolvedURL: candidate
+                    resolvedURL: candidate,
+                    twikooEnvID: extractTwikooEnvID(from: cleanHTML),
+                    pagePath: candidate.path
                 )
             } catch {
                 continue
@@ -387,6 +412,17 @@ struct FeedService {
             .map(deduplicateHeadingIfNeeded)
             .joined(separator: "\n")
 
+        // Remove inline trailing boilerplate if content was collapsed into one line.
+        let inlineNoisePatterns = [
+            #"网站资讯.*$"#,
+            #"文章总数\s*[:：].*$"#,
+            #"建站天数\s*[:：].*$"#,
+            #"欢迎光临.*$"#
+        ]
+        for pattern in inlineNoisePatterns {
+            output = output.replacingOccurrences(of: pattern, with: "", options: [.regularExpression, .caseInsensitive])
+        }
+
         // Create paragraph spacing so content doesn't collapse into a single block.
         output = output.replacingOccurrences(of: #"\n{3,}"#, with: "\n\n", options: .regularExpression)
 
@@ -421,6 +457,36 @@ struct FeedService {
                 let title = trimmed.replacingOccurrences(of: #"^#{1,6}\s*"#, with: "", options: .regularExpression)
                 if !title.isEmpty { return title }
             }
+        }
+
+        return nil
+    }
+
+
+    private func extractMarkdownSourceURL(from html: String, sourceURL: URL) -> URL? {
+        if let regex = try? NSRegularExpression(pattern: #"<a[^>]*href=[\"']([^\"']+\.md)[\"'][^>]*>"#, options: [.caseInsensitive]),
+           let match = regex.firstMatch(in: html, options: [], range: NSRange(html.startIndex..<html.endIndex, in: html)),
+           let hrefRange = Range(match.range(at: 1), in: html) {
+            let href = String(html[hrefRange])
+            return resolveArticleURL(href, sourceURL: sourceURL)
+        }
+
+        return nil
+    }
+
+    private func extractTwikooEnvID(from html: String) -> String? {
+        let patterns = [
+            #"envId\s*:\s*[\"']([^\"']+)[\"']"#,
+            #"data-env-id=[\"']([^\"']+)[\"']"#
+        ]
+
+        for pattern in patterns {
+            guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]),
+                  let match = regex.firstMatch(in: html, options: [], range: NSRange(html.startIndex..<html.endIndex, in: html)),
+                  let envRange = Range(match.range(at: 1), in: html) else { continue }
+
+            let env = String(html[envRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+            if !env.isEmpty { return env }
         }
 
         return nil

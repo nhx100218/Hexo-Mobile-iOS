@@ -29,3 +29,4 @@
 "about.title" = "关于博客";
 "about.load_failed" = "无法加载关于页面";
 "about.open_source" = "打开关于页面来源";
+"article.comments" = "评论";
