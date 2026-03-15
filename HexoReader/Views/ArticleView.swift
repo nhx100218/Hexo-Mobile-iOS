@@ -16,20 +16,15 @@ struct ArticleView: View {
     }()
 
     var body: some View {
-        ZStack {
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .ignoresSafeArea()
-
-            content
-        }
-        .navigationTitle(LocalizedStringKey("article.title"))
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
-        .task {
-            await loadArticleIfNeeded()
-        }
+        content
+            .navigationTitle(LocalizedStringKey("article.title"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .task {
+                await loadArticleIfNeeded()
+            }
+            .liquidGlassBackground()
     }
 
     @ViewBuilder
@@ -67,7 +62,7 @@ struct ArticleView: View {
                         .padding(.top, 8)
                 }
                 .padding(18)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .liquidGlassCard()
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
             }

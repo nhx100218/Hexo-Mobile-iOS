@@ -17,7 +17,7 @@ struct BlogListView: View {
                 .toolbar { toolbarContent }
                 .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
                 .toolbarBackground(.visible, for: .navigationBar)
-                .background(.ultraThinMaterial)
+                .liquidGlassBackground()
                 .task {
                     if !viewModel.baseURL.isEmpty, viewModel.posts.isEmpty {
                         await viewModel.loadPosts()
@@ -25,7 +25,7 @@ struct BlogListView: View {
                 }
         }
         .tint(.accentColor)
-        .background(.ultraThinMaterial)
+        .liquidGlassBackground()
     }
 
     @ViewBuilder
@@ -55,14 +55,14 @@ struct BlogListView: View {
             BlogPostRow(post: post)
                 .listRowBackground(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(.ultraThinMaterial)
+                        .fill(.thinMaterial)
                         .padding(.vertical, 2)
                 )
                 .listRowSeparator(.hidden)
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .background(.ultraThinMaterial)
+        .liquidGlassBackground()
     }
 
     @ToolbarContentBuilder

@@ -11,19 +11,14 @@ struct AboutView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Rectangle()
-                    .fill(.ultraThinMaterial)
-                    .ignoresSafeArea()
-
-                content
-            }
-            .navigationTitle(LocalizedStringKey("about.title"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .task { await loadAbout() }
+            content
+                .navigationTitle(LocalizedStringKey("about.title"))
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .task { await loadAbout() }
         }
+        .liquidGlassBackground()
     }
 
     @ViewBuilder
@@ -31,7 +26,7 @@ struct AboutView: View {
         if isLoading {
             VStack {
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(.ultraThinMaterial)
+                    .fill(.thinMaterial)
                     .frame(height: 92)
                     .padding(.horizontal, 16)
 
@@ -60,7 +55,7 @@ struct AboutView: View {
                         .font(.footnote)
                 }
                 .padding(18)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .liquidGlassCard()
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
             }
