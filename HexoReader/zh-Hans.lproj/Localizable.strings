@@ -1,4 +1,4 @@
-"app.title" = "HexoReader";
+"app.title" = "Hexo mobile";
 "common.loading" = "正在加载文章…";
 "common.loading_feed" = "正在加载订阅…";
 "list.unable_to_load" = "无法加载文章列表";

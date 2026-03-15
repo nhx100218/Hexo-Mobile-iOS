@@ -357,7 +357,10 @@ struct FeedService {
             #"^\s*归档.*$"#,
             #"^\s*网站资讯.*$"#,
             #"^\s*文章总数.*$"#,
-            #"^\s*建站天数.*$"#
+            #"^\s*建站天数.*$"#,
+            #"^\s*archives?.*$"#,
+            #"^\s*site info.*$"#,
+            #"^\s*comments?.*$"#
         ]
 
         output = output
@@ -370,11 +373,43 @@ struct FeedService {
             }
             .joined(separator: "\n")
 
-        // Keep markdown syntax, but normalize spacing so parser can render headings/lists.
+        // Normalize heading markers and ensure heading starts on a new line.
+        output = output.replacingOccurrences(of: #"(?<!\n)(#{1,6}\s*)"#, with: "\n$1", options: .regularExpression)
         output = output.replacingOccurrences(of: #"(^|\n)(#{1,6})([^\s#])"#, with: "$1$2 $3", options: .regularExpression)
+
+        // Ensure list items and quote lines start on a new line for markdown parsing.
+        output = output.replacingOccurrences(of: #"(?<!\n)([-*>]\s+)"#, with: "\n$1", options: .regularExpression)
+
+        // If heading line accidentally duplicates (e.g. 关于此博客关于此博客), dedupe it.
+        output = output
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .map(String.init)
+            .map(deduplicateHeadingIfNeeded)
+            .joined(separator: "\n")
+
+        // Create paragraph spacing so content doesn't collapse into a single block.
         output = output.replacingOccurrences(of: #"\n{3,}"#, with: "\n\n", options: .regularExpression)
 
         return output.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func deduplicateHeadingIfNeeded(_ line: String) -> String {
+        let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.hasPrefix("#") else { return line }
+
+        let headingBody = trimmed.replacingOccurrences(of: #"^#{1,6}\s*"#, with: "", options: .regularExpression)
+        guard headingBody.count >= 4, headingBody.count % 2 == 0 else { return line }
+
+        let halfIndex = headingBody.index(headingBody.startIndex, offsetBy: headingBody.count / 2)
+        let left = String(headingBody[..<halfIndex])
+        let right = String(headingBody[halfIndex...])
+
+        if left == right {
+            let prefix = trimmed.prefix { $0 == "#" }
+            return "\(prefix) \(left)"
+        }
+
+        return line
     }
 
     private func extractTitleFromMarkdown(_ markdown: String) -> String? {
@@ -420,9 +455,17 @@ struct FeedService {
     private func titleFromURL(_ url: URL) -> String {
         let components = url.pathComponents.filter { $0 != "/" }
         if let raw = components.last {
-            return raw
+            let cleaned = raw
                 .replacingOccurrences(of: ".md", with: "")
                 .replacingOccurrences(of: ".html", with: "")
+
+            if cleaned == "index", components.count >= 2 {
+                return components[components.count - 2]
+                    .replacingOccurrences(of: "-", with: " ")
+                    .capitalized
+            }
+
+            return cleaned
                 .replacingOccurrences(of: "-", with: " ")
                 .capitalized
         }
