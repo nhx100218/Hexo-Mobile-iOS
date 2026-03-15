@@ -99,6 +99,7 @@ struct ArticleView: View {
             errorMessage = error.localizedDescription
         }
     }
+}
 
 private struct MarkdownContentView: View {
     let markdown: String
