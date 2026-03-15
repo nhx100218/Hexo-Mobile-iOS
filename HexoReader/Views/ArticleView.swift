@@ -1,5 +1,4 @@
 import SwiftUI
-import WebKit
 
 struct ArticleView: View {
     let url: URL
@@ -100,7 +99,6 @@ struct ArticleView: View {
             errorMessage = error.localizedDescription
         }
     }
-}
 
 private struct MarkdownContentView: View {
     let markdown: String
@@ -143,6 +141,7 @@ private struct TwikooCommentsView: UIViewRepresentable {
         webView.scrollView.backgroundColor = .clear
         return webView
     }
+}
 
     func updateUIView(_ uiView: WKWebView, context: Context) {
         uiView.loadHTMLString(htmlTemplate, baseURL: URL(string: "https://twikoo.js.org"))
