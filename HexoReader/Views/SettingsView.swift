@@ -36,12 +36,12 @@ struct SettingsView: View {
                 .font(.headline)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 6)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .liquidGlassCard(cornerRadius: 12)
             }
             .listRowBackground(Color.clear)
         }
         .scrollContentBackground(.hidden)
-        .background(.ultraThinMaterial)
+        .liquidGlassBackground()
         .navigationTitle(LocalizedStringKey("settings.title"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.ultraThinMaterial, for: .navigationBar)

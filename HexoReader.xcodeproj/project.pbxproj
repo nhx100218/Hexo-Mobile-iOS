@@ -17,6 +17,7 @@
 		A00000000000000000000008 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000018 /* SettingsView.swift */; };
 		A00000000000000000000009 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000019 /* Constants.swift */; };
 		A0000000000000000000000C /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000001D /* AboutView.swift */; };
+		A0000000000000000000000D /* LiquidGlassStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000001E /* LiquidGlassStyle.swift */; };
 		A0000000000000000000000A /* FeedKit in Frameworks */ = {isa = PBXBuildFile; productRef = A00000000000000000000041 /* FeedKit */; };
 		A0000000000000000000000B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000001A /* Localizable.strings */; };
 /* End PBXBuildFile section */
@@ -35,6 +36,7 @@
 		A0000000000000000000001B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		A0000000000000000000001C /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh-Hans; path = zh-Hans.lproj/Localizable.strings; sourceTree = "<group>"; };
 		A0000000000000000000001D /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		A0000000000000000000001E /* LiquidGlassStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidGlassStyle.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -111,6 +113,7 @@
 				A00000000000000000000017 /* ArticleView.swift */,
 				A00000000000000000000018 /* SettingsView.swift */,
 				A0000000000000000000001D /* AboutView.swift */,
+				A0000000000000000000001E /* LiquidGlassStyle.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -210,6 +213,7 @@
 				A00000000000000000000008 /* SettingsView.swift in Sources */,
 				A00000000000000000000009 /* Constants.swift in Sources */,
 				A0000000000000000000000C /* AboutView.swift in Sources */,
+				A0000000000000000000000D /* LiquidGlassStyle.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
