@@ -1,17 +1,17 @@
-# HexoReader
+# Hexo mobile
 
-HexoReader is a fully native SwiftUI iOS app that turns any Hexo blog into a mobile-first reader experience.
+Hexo mobile is a fully native SwiftUI iOS app that turns any Hexo blog into a mobile-first reader experience.
 
-Users only need to provide a base blog URL (for example, `https://example.com`). HexoReader automatically discovers a valid feed (`/atom.xml`, `/rss.xml`, or `/feed.xml`), fetches posts, and renders them in a clean reading UI.
+Users only need to provide a base blog URL (for example, `https://example.com`). Hexo mobile automatically discovers a valid feed (`/atom.xml`, `/rss.xml`, or `/feed.xml`), fetches posts, and renders them in a clean reading UI.
 
 ## Features
 
-- **SwiftUI-native app** targeting **iOS 17+**
+- **SwiftUI-native app** targeting **iOS 26+**
 - **MVVM architecture** for separation of concerns
 - **Automatic feed detection** from a Hexo base URL
 - **RSS/Atom parsing** powered by [FeedKit](https://github.com/nmdias/FeedKit)
 - **Post list with metadata** (title, date, summary)
-- **In-app article reader** using `WKWebView`
+- **In-app native Markdown article reader** (no direct webpage rendering)
 - **Modern visual style** with glass-like `.ultraThinMaterial` navigation bars
 - **Dark mode + dynamic system colors**
 - **Saved blog URL** using `UserDefaults`
@@ -19,7 +19,7 @@ Users only need to provide a base blog URL (for example, `https://example.com`).
 ## Project Layout
 
 ```
-HexoReader
+Hexo mobile
 ├── HexoReaderApp.swift
 ├── Models
 │   └── Post.swift
@@ -37,7 +37,7 @@ HexoReader
 
 ## Build Locally (Xcode)
 
-1. Open `HexoReader.xcodeproj` in Xcode 15+
+1. Open `HexoReader.xcodeproj` in Xcode 26+
 2. Select the `HexoReader` scheme
 3. Choose an iOS simulator or a device
 4. Build and run (`⌘R`)
@@ -55,7 +55,7 @@ The workflow at `.github/workflows/build-ios.yml` runs on every push to `main` a
 1. Checks out the repository
 2. Archives the app without code signing
 3. Packages an unsigned IPA directly from the archived `.app` (no signing/export options needed)
-4. Uploads the IPA artifact (`HexoReader-ipa`)
+4. Uploads the IPA artifact (`Hexo-mobile-ipa`)
 
 Manual equivalent:
 
@@ -74,14 +74,14 @@ mkdir -p build/Payload
 cp -R "$APP_PATH" build/Payload/
 (
   cd build
-  /usr/bin/zip -qry HexoReader.ipa Payload
+  /usr/bin/zip -qry Hexo-mobile.ipa Payload
 )
 rm -rf build/Payload
 ```
 
 ## Sideloading the IPA
 
-After CI finishes, download the `HexoReader-ipa` artifact and sideload using:
+After CI finishes, download the `Hexo-mobile-ipa` artifact and sideload using:
 
 - **Sideloadly**
 - **AltStore**
