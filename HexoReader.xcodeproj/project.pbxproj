@@ -16,7 +16,9 @@
 		A00000000000000000000007 /* ArticleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000017 /* ArticleView.swift */; };
 		A00000000000000000000008 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000018 /* SettingsView.swift */; };
 		A00000000000000000000009 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000019 /* Constants.swift */; };
+		A0000000000000000000000C /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000001D /* AboutView.swift */; };
 		A0000000000000000000000A /* FeedKit in Frameworks */ = {isa = PBXBuildFile; productRef = A00000000000000000000041 /* FeedKit */; };
+		A0000000000000000000000B /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000001A /* Localizable.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +32,9 @@
 		A00000000000000000000017 /* ArticleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArticleView.swift; sourceTree = "<group>"; };
 		A00000000000000000000018 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A00000000000000000000019 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		A0000000000000000000001B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		A0000000000000000000001C /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh-Hans; path = zh-Hans.lproj/Localizable.strings; sourceTree = "<group>"; };
+		A0000000000000000000001D /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,6 +61,7 @@
 			isa = PBXGroup;
 			children = (
 				A00000000000000000000011 /* HexoReaderApp.swift */,
+				A0000000000000000000001A /* Localizable.strings */,
 				A00000000000000000000033 /* Models */,
 				A00000000000000000000034 /* Services */,
 				A00000000000000000000035 /* ViewModels */,
@@ -104,6 +110,7 @@
 				A00000000000000000000016 /* BlogListView.swift */,
 				A00000000000000000000017 /* ArticleView.swift */,
 				A00000000000000000000018 /* SettingsView.swift */,
+				A0000000000000000000001D /* AboutView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -161,6 +168,7 @@
 			knownRegions = (
 				en,
 				Base,
+				"zh-Hans",
 			);
 			mainGroup = A00000000000000000000030;
 			packageReferences = (
@@ -181,6 +189,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A0000000000000000000000B /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -200,10 +209,24 @@
 				A00000000000000000000007 /* ArticleView.swift in Sources */,
 				A00000000000000000000008 /* SettingsView.swift in Sources */,
 				A00000000000000000000009 /* Constants.swift in Sources */,
+				A0000000000000000000000C /* AboutView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+
+/* Begin PBXVariantGroup section */
+		A0000000000000000000001A /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A0000000000000000000001B /* en */,
+				A0000000000000000000001C /* zh-Hans */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		A00000000000000000000025 /* Debug */ = {
@@ -225,7 +248,7 @@
 					"DEBUG=1",
 					"$(inherited)",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -248,7 +271,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -265,7 +288,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = HexoReader;
+				INFOPLIST_KEY_CFBundleDisplayName = "Hexo mobile";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -293,7 +316,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = HexoReader;
+				INFOPLIST_KEY_CFBundleDisplayName = "Hexo mobile";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

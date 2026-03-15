@@ -13,35 +13,37 @@ struct BlogListView: View {
     var body: some View {
         NavigationStack {
             contentView
-            .navigationTitle("HexoReader")
-            .toolbar { toolbarContent }
-            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .task {
-                if !viewModel.baseURL.isEmpty, viewModel.posts.isEmpty {
-                    await viewModel.loadPosts()
+                .navigationTitle(LocalizedStringKey("app.title"))
+                .toolbar { toolbarContent }
+                .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .background(.ultraThinMaterial)
+                .task {
+                    if !viewModel.baseURL.isEmpty, viewModel.posts.isEmpty {
+                        await viewModel.loadPosts()
+                    }
                 }
-            }
         }
         .tint(.accentColor)
+        .background(.ultraThinMaterial)
     }
 
     @ViewBuilder
     private var contentView: some View {
         if viewModel.isLoading {
-            ProgressView("Loading feed…")
+            ProgressView(LocalizedStringKey("common.loading_feed"))
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let errorMessage = viewModel.errorMessage {
             ContentUnavailableView(
-                "Unable to Load Posts",
+                LocalizedStringKey("list.unable_to_load"),
                 systemImage: "exclamationmark.triangle",
                 description: Text(errorMessage)
             )
         } else if viewModel.posts.isEmpty {
             ContentUnavailableView(
-                "No Posts",
+                LocalizedStringKey("list.no_posts"),
                 systemImage: "doc.text.magnifyingglass",
-                description: Text("Add a Hexo blog URL in Settings and tap Refresh.")
+                description: Text(LocalizedStringKey("list.no_posts_desc"))
             )
         } else {
             postList
@@ -51,34 +53,35 @@ struct BlogListView: View {
     private var postList: some View {
         List(viewModel.posts) { post in
             BlogPostRow(post: post)
-                .listRowBackground(Rectangle().fill(.ultraThinMaterial))
+                .listRowBackground(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .padding(.vertical, 2)
+                )
+                .listRowSeparator(.hidden)
         }
+        .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .background(Color(.systemBackground))
+        .background(.ultraThinMaterial)
     }
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
-        if let detectedFeedPath = viewModel.detectedFeedURL?.path {
-            ToolbarItem(placement: .topBarLeading) {
-                Label(detectedFeedPath, systemImage: "dot.radiowaves.left.and.right")
-                    .font(.caption)
-                    .labelStyle(.titleAndIcon)
-                    .foregroundStyle(.secondary)
+        ToolbarItem(placement: .topBarLeading) {
+            Button {
+                Task { await viewModel.loadPosts() }
+            } label: {
+                Image(systemName: "arrow.clockwise")
+                    .padding(8)
+                    .background(.ultraThinMaterial, in: Circle())
             }
         }
 
         ToolbarItem(placement: .topBarTrailing) {
             NavigationLink(destination: SettingsView(viewModel: viewModel)) {
                 Image(systemName: "gearshape")
-            }
-        }
-
-        ToolbarItem(placement: .topBarTrailing) {
-            Button {
-                Task { await viewModel.loadPosts() }
-            } label: {
-                Image(systemName: "arrow.clockwise")
+                    .padding(8)
+                    .background(.ultraThinMaterial, in: Circle())
             }
         }
     }
@@ -105,7 +108,7 @@ private struct BlogPostRow: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(3)
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, 6)
         }
     }
 }
