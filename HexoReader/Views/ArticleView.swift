@@ -1,4 +1,8 @@
 import SwiftUI
+#if canImport(WebKit)
+import WebKit
+import UIKit
+#endif
 
 struct ArticleView: View {
     let url: URL
@@ -131,15 +135,18 @@ private struct MarkdownContentView: View {
     }
 }
 
+#if canImport(WebKit)
 private struct TwikooCommentsView: UIViewRepresentable {
+    typealias UIViewType = WKWebView
+
     let envID: String
     let pagePath: String
 
     func makeUIView(context: Context) -> WKWebView {
-        let webView = WKWebView(frame: .zero)
+        let webView = WKWebView(frame: CGRect.zero)
         webView.isOpaque = false
-        webView.backgroundColor = .clear
-        webView.scrollView.backgroundColor = .clear
+        webView.backgroundColor = UIColor.clear
+        webView.scrollView.backgroundColor = UIColor.clear
         return webView
     }
 }
@@ -175,3 +182,17 @@ private struct TwikooCommentsView: UIViewRepresentable {
         """
     }
 }
+#else
+private struct TwikooCommentsView: View {
+    let envID: String
+    let pagePath: String
+
+    var body: some View {
+        ContentUnavailableView(
+            LocalizedStringKey("article.comments"),
+            systemImage: "text.bubble",
+            description: Text("WebKit is not available in this build environment.")
+        )
+    }
+}
+#endif
